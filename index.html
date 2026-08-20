@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToDo - 极简待办</title>
+    <title>ToDo - 云同步待办</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -32,11 +32,7 @@
             --primary-light: #312e81;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -90,26 +86,66 @@
             font-weight: 300;
         }
 
-        .theme-toggle {
+        .header-actions {
             position: absolute;
             right: 0;
-            top: 10px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 50%;
+            top: 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
             width: 42px;
             height: 42px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text-secondary);
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             transition: all 0.3s;
             box-shadow: var(--shadow);
         }
 
-        .theme-toggle:hover {
-            transform: rotate(20deg) scale(1.1);
+        .icon-btn:hover {
+            transform: scale(1.1);
+            color: var(--primary);
+        }
+
+        .icon-btn.sync-btn {
+            position: relative;
+        }
+
+        .icon-btn.sync-btn.synced {
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        .icon-btn.sync-btn.syncing {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .sync-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 10px;
+            height: 10px;
+            background: var(--danger);
+            border-radius: 50%;
+            border: 2px solid var(--card);
+        }
+
+        .sync-badge.hidden {
+            display: none;
         }
 
         /* Stats */
@@ -130,9 +166,7 @@
             transition: transform 0.2s;
         }
 
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
+        .stat-card:hover { transform: translateY(-2px); }
 
         .stat-number {
             font-size: 1.6rem;
@@ -182,9 +216,7 @@
             box-shadow: 0 0 0 4px var(--primary-light);
         }
 
-        .todo-input::placeholder {
-            color: var(--text-secondary);
-        }
+        .todo-input::placeholder { color: var(--text-secondary); }
 
         .date-input {
             padding: 14px 16px;
@@ -261,10 +293,6 @@
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
         }
 
-        .add-btn:active {
-            transform: translateY(0);
-        }
-
         .priority-tags {
             display: flex;
             gap: 10px;
@@ -310,10 +338,7 @@
         /* Modal */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
@@ -322,6 +347,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s;
+            padding: 20px;
         }
 
         .modal-overlay.show {
@@ -333,22 +359,40 @@
             background: var(--card);
             border-radius: 20px;
             padding: 28px;
-            width: 90%;
-            max-width: 400px;
+            width: 100%;
+            max-width: 460px;
             box-shadow: var(--shadow-lg);
             border: 1px solid var(--border);
             transform: scale(0.9);
             transition: transform 0.3s;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        .modal-overlay.show .modal {
-            transform: scale(1);
-        }
+        .modal-overlay.show .modal { transform: scale(1); }
 
         .modal-title {
             font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .modal-desc code {
+            background: var(--bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--primary);
         }
 
         .modal-input {
@@ -361,17 +405,29 @@
             color: var(--text);
             outline: none;
             font-family: inherit;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
-        .modal-input:focus {
-            border-color: var(--primary);
+        .modal-input:focus { border-color: var(--primary); }
+
+        .modal-input.small {
+            font-size: 0.9rem;
+            padding: 10px 14px;
+        }
+
+        .input-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: block;
         }
 
         .modal-buttons {
             display: flex;
             gap: 10px;
             justify-content: flex-end;
+            margin-top: 20px;
         }
 
         .modal-btn {
@@ -389,9 +445,7 @@
             color: var(--text-secondary);
         }
 
-        .modal-btn.cancel:hover {
-            background: var(--border);
-        }
+        .modal-btn.cancel:hover { background: var(--border); }
 
         .modal-btn.confirm {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -402,6 +456,40 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
+
+        .modal-btn.danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .sync-status.success {
+            background: #f0fdf4;
+            color: var(--success);
+        }
+
+        .sync-status.error {
+            background: #fef2f2;
+            color: var(--danger);
+        }
+
+        .sync-status.info {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        [data-theme="dark"] .sync-status.success { background: #052e16; }
+        [data-theme="dark"] .sync-status.error { background: #450a0a; }
+        [data-theme="dark"] .sync-status.info { background: #312e81; }
 
         /* Filters */
         .filters {
@@ -472,22 +560,13 @@
             transform: translateX(4px);
         }
 
-        .todo-item.completed {
-            opacity: 0.6;
-        }
-
+        .todo-item.completed { opacity: 0.6; }
         .todo-item.completed .todo-text {
             text-decoration: line-through;
             color: var(--text-secondary);
         }
-
-        .todo-item.overdue {
-            border-left: 4px solid var(--danger);
-        }
-
-        .todo-item.due-soon {
-            border-left: 4px solid var(--warning);
-        }
+        .todo-item.overdue { border-left: 4px solid var(--danger); }
+        .todo-item.due-soon { border-left: 4px solid var(--warning); }
 
         .checkbox {
             width: 24px;
@@ -503,15 +582,11 @@
             margin-top: 2px;
         }
 
-        .checkbox:hover {
-            border-color: var(--primary);
-        }
-
+        .checkbox:hover { border-color: var(--primary); }
         .checkbox.checked {
             background: var(--success);
             border-color: var(--success);
         }
-
         .checkbox.checked::after {
             content: "✓";
             color: white;
@@ -535,10 +610,7 @@
             margin: -4px -8px;
         }
 
-        .todo-text:hover {
-            background: var(--bg);
-        }
-
+        .todo-text:hover { background: var(--bg); }
         .todo-text[contenteditable="true"] {
             background: var(--primary-light);
             outline: none;
@@ -562,20 +634,9 @@
             gap: 4px;
         }
 
-        .priority-badge.high {
-            background: #fef2f2;
-            color: var(--danger);
-        }
-
-        .priority-badge.medium {
-            background: #fffbeb;
-            color: var(--warning);
-        }
-
-        .priority-badge.low {
-            background: #f0fdf4;
-            color: var(--success);
-        }
+        .priority-badge.high { background: #fef2f2; color: var(--danger); }
+        .priority-badge.medium { background: #fffbeb; color: var(--warning); }
+        .priority-badge.low { background: #f0fdf4; color: var(--success); }
 
         [data-theme="dark"] .priority-badge.high { background: #450a0a; }
         [data-theme="dark"] .priority-badge.medium { background: #451a03; }
@@ -590,24 +651,11 @@
             background: var(--bg);
             color: var(--text-secondary);
         }
-
-        .due-date-badge.overdue {
-            background: #fef2f2;
-            color: var(--danger);
-        }
-
-        .due-date-badge.due-soon {
-            background: #fffbeb;
-            color: var(--warning);
-        }
+        .due-date-badge.overdue { background: #fef2f2; color: var(--danger); }
+        .due-date-badge.due-soon { background: #fffbeb; color: var(--warning); }
 
         [data-theme="dark"] .due-date-badge.overdue { background: #450a0a; }
         [data-theme="dark"] .due-date-badge.due-soon { background: #451a03; }
-
-        .todo-date {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
 
         .todo-actions {
             display: flex;
@@ -618,9 +666,7 @@
             margin-top: 2px;
         }
 
-        .todo-item:hover .todo-actions {
-            opacity: 1;
-        }
+        .todo-item:hover .todo-actions { opacity: 1; }
 
         .action-btn {
             width: 34px;
@@ -661,15 +707,8 @@
             opacity: 0.5;
         }
 
-        .empty-text {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-        }
-
-        .empty-subtext {
-            font-size: 0.9rem;
-            opacity: 0.7;
-        }
+        .empty-text { font-size: 1.1rem; margin-bottom: 8px; }
+        .empty-subtext { font-size: 0.9rem; opacity: 0.7; }
 
         /* Progress Bar */
         .progress-section {
@@ -688,11 +727,7 @@
             margin-bottom: 12px;
         }
 
-        .progress-title {
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-
+        .progress-title { font-weight: 500; font-size: 0.95rem; }
         .progress-percent {
             font-weight: 700;
             color: var(--primary);
@@ -721,64 +756,28 @@
             font-size: 0.85rem;
         }
 
-        .footer a {
-            color: var(--primary);
-            text-decoration: none;
-        }
+        .footer a { color: var(--primary); text-decoration: none; }
 
         /* Responsive */
         @media (max-width: 640px) {
-            .stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .input-row {
-                flex-wrap: wrap;
-            }
-
-            .todo-input {
-                width: 100%;
-                flex: auto;
-            }
-
-            .date-input, .category-select-wrapper {
-                flex: 1;
-                min-width: 120px;
-            }
-
-            .add-btn {
-                width: 100%;
-            }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .input-row { flex-wrap: wrap; }
+            .todo-input { width: 100%; flex: auto; }
+            .date-input, .category-select-wrapper { flex: 1; min-width: 120px; }
+            .add-btn { width: 100%; }
+            .header-actions { position: static; justify-content: center; margin-top: 16px; }
         }
 
         @media (max-width: 480px) {
-            .container {
-                padding: 20px 16px;
-            }
-
-            .logo {
-                font-size: 2rem;
-            }
-
-            .stats {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .todo-actions {
-                opacity: 1;
-            }
-
-            .filters {
-                gap: 6px;
-            }
-
-            .filter-btn {
-                padding: 6px 12px;
-                font-size: 0.85rem;
-            }
+            .container { padding: 20px 16px; }
+            .logo { font-size: 2rem; }
+            .stats { grid-template-columns: 1fr 1fr; }
+            .todo-actions { opacity: 1; }
+            .filters { gap: 6px; }
+            .filter-btn { padding: 6px 12px; font-size: 0.85rem; }
         }
 
-        /* Toast Notification */
+        /* Toast */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -795,8 +794,12 @@
             pointer-events: none;
         }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .help-link {
+            color: var(--primary);
+            text-decoration: underline;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -808,7 +811,13 @@
                 ToDo
             </div>
             <p class="subtitle">极简高效的待办事项管理</p>
-            <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">🌙</button>
+            <div class="header-actions">
+                <button class="icon-btn sync-btn" id="syncBtn" onclick="openSyncModal()" title="云同步">
+                    ☁️
+                    <span class="sync-badge" id="syncBadge"></span>
+                </button>
+                <button class="icon-btn" onclick="toggleTheme()" title="切换主题">🌙</button>
+            </div>
         </header>
 
         <div class="stats">
@@ -878,14 +887,14 @@
         </div>
 
         <footer class="footer">
-            <p>💾 数据自动保存在本地浏览器中</p>
+            <p>💾 本地自动保存 | ☁️ 支持 GitHub Gist 云同步</p>
             <p style="margin-top: 8px;">Made with ❤️ | 开源托管于 <a href="https://github.com" target="_blank">GitHub</a></p>
         </footer>
     </div>
 
     <div class="toast" id="toast"></div>
 
-    <!-- Add Category Modal -->
+    <!-- Category Modal -->
     <div class="modal-overlay" id="categoryModal">
         <div class="modal">
             <div class="modal-title">新增类别</div>
@@ -897,31 +906,79 @@
         </div>
     </div>
 
+    <!-- Sync Modal -->
+    <div class="modal-overlay" id="syncModal">
+        <div class="modal">
+            <div class="modal-title">☁️ GitHub 云同步</div>
+            <div class="modal-desc">
+                通过 GitHub Gist 实现跨设备同步。数据保存在你的 GitHub 账户中，换手机也不怕丢失。
+                <br><br>
+                <strong>首次使用？</strong> <span class="help-link" onclick="showTokenHelp()">点击查看如何获取 Token</span>
+            </div>
+            <div id="syncStatusBox"></div>
+            <label class="input-label">GitHub Personal Access Token</label>
+            <input type="password" class="modal-input small" id="gistToken" placeholder="ghp_xxxxxxxxxxxx">
+            <label class="input-label">Gist ID（可选，留空则自动创建）</label>
+            <input type="text" class="modal-input small" id="gistId" placeholder="首次使用请留空">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeSyncModal()">关闭</button>
+                <button class="modal-btn confirm" onclick="pullFromGist()">⬇️ 拉取</button>
+                <button class="modal-btn confirm" onclick="pushToGist()">⬆️ 推送</button>
+                <button class="modal-btn danger" onclick="clearSyncConfig()">清除配置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token Help Modal -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal">
+            <div class="modal-title">🔑 如何获取 GitHub Token</div>
+            <div class="modal-desc">
+                1. 打开 <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--primary)">github.com/settings/tokens</a><br>
+                2. 点击 <strong>Generate new token (classic)</strong><br>
+                3. Note 填写 "ToDo Sync"<br>
+                4. Expiration 选择 <strong>No expiration</strong>（或自定义时长）<br>
+                5. 勾选 <strong>gist</strong> 权限（仅此一项即可）<br>
+                6. 点击页面底部 <strong>Generate token</strong><br>
+                7. <strong>立即复制</strong>生成的 Token（只显示一次！）<br><br>
+                将 Token 粘贴到云同步设置中，点击"推送"即可上传数据。
+                换设备时，输入同一个 Token 点击"拉取"即可恢复。
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn confirm" onclick="closeHelpModal()">明白了</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // State
+        // ==================== STATE ====================
         let todos = JSON.parse(localStorage.getItem('todos')) || [];
         let categories = JSON.parse(localStorage.getItem('categories')) || ['工作', '学习', '生活', '购物'];
         let currentPriority = 'medium';
         let currentFilter = 'all';
         let currentCategoryFilter = '';
+        let gistToken = localStorage.getItem('gistToken') || '';
+        let gistId = localStorage.getItem('gistId') || '';
+        let autoSync = localStorage.getItem('autoSync') !== 'false';
+        let syncTimeout = null;
 
-        // Initialize
+        // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', () => {
             loadTheme();
             initCategorySelect();
             renderCategoryFilters();
             renderTodos();
             updateStats();
+            updateSyncUI();
 
-            // Set default date to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('todoDate').value = today;
         });
 
-        // Theme
+        // ==================== THEME ====================
         function toggleTheme() {
             const html = document.documentElement;
-            const btn = document.querySelector('.theme-toggle');
+            const btn = document.querySelector('.header-actions .icon-btn:last-child');
             if (html.getAttribute('data-theme') === 'dark') {
                 html.removeAttribute('data-theme');
                 localStorage.setItem('theme', 'light');
@@ -935,14 +992,14 @@
 
         function loadTheme() {
             const theme = localStorage.getItem('theme');
-            const btn = document.querySelector('.theme-toggle');
+            const btn = document.querySelector('.header-actions .icon-btn:last-child');
             if (theme === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 btn.textContent = '☀️';
             }
         }
 
-        // Category Select
+        // ==================== CATEGORY ====================
         function initCategorySelect() {
             const select = document.getElementById('categorySelect');
             select.innerHTML = '<option value="">选择类别</option>';
@@ -955,8 +1012,6 @@
             const addOpt = document.createElement('option');
             addOpt.value = '__new__';
             addOpt.textContent = '+ 新增类别';
-            addOpt.style.color = 'var(--primary)';
-            addOpt.style.fontWeight = '500';
             select.appendChild(addOpt);
         }
 
@@ -981,14 +1036,8 @@
         function confirmAddCategory() {
             const input = document.getElementById('newCategoryInput');
             const name = input.value.trim();
-            if (!name) {
-                showToast('请输入类别名称');
-                return;
-            }
-            if (categories.includes(name)) {
-                showToast('该类别已存在');
-                return;
-            }
+            if (!name) { showToast('请输入类别名称'); return; }
+            if (categories.includes(name)) { showToast('该类别已存在'); return; }
             categories.push(name);
             saveCategories();
             initCategorySelect();
@@ -1002,12 +1051,9 @@
             localStorage.setItem('categories', JSON.stringify(categories));
         }
 
-        // Category Filters
         function renderCategoryFilters() {
             const container = document.getElementById('filterContainer');
-            // Remove old category filter buttons
             container.querySelectorAll('.cat-filter-btn').forEach(el => el.remove());
-
             categories.forEach(cat => {
                 const btn = document.createElement('button');
                 btn.className = 'filter-btn cat-filter-btn';
@@ -1016,11 +1062,10 @@
                 btn.onclick = () => setCategoryFilter(cat);
                 container.appendChild(btn);
             });
-
             updateFilterActiveState();
         }
 
-        // Priority
+        // ==================== PRIORITY & FILTER ====================
         function setPriority(priority) {
             currentPriority = priority;
             document.querySelectorAll('.priority-tag').forEach(tag => {
@@ -1028,7 +1073,6 @@
             });
         }
 
-        // Filter
         function setFilter(filter) {
             currentFilter = filter;
             currentCategoryFilter = '';
@@ -1054,18 +1098,13 @@
             });
         }
 
-        // Add Todo
+        // ==================== TODO CRUD ====================
         function addTodo() {
             const input = document.getElementById('todoInput');
             const dateInput = document.getElementById('todoDate');
             const catSelect = document.getElementById('categorySelect');
             const text = input.value.trim();
-
-            if (!text) {
-                showToast('请输入待办事项内容');
-                input.focus();
-                return;
-            }
+            if (!text) { showToast('请输入待办事项内容'); input.focus(); return; }
 
             const todo = {
                 id: Date.now(),
@@ -1081,19 +1120,16 @@
             saveTodos();
             renderTodos();
             updateStats();
-
             input.value = '';
             catSelect.value = '';
             showToast('任务添加成功！');
+            scheduleAutoSync();
         }
 
         function handleKeyPress(e) {
-            if (e.key === 'Enter') {
-                addTodo();
-            }
+            if (e.key === 'Enter') addTodo();
         }
 
-        // Toggle Complete
         function toggleTodo(id) {
             const todo = todos.find(t => t.id === id);
             if (todo) {
@@ -1102,10 +1138,10 @@
                 renderTodos();
                 updateStats();
                 showToast(todo.completed ? '任务已完成！🎉' : '任务已恢复');
+                scheduleAutoSync();
             }
         }
 
-        // Delete Todo
         function deleteTodo(id) {
             const el = document.querySelector(`[data-id="${id}"]`);
             if (el) {
@@ -1117,19 +1153,17 @@
                     renderTodos();
                     updateStats();
                     showToast('任务已删除');
+                    scheduleAutoSync();
                 }, 300);
             }
         }
 
-        // Edit Todo
         function editTodo(id) {
             const todo = todos.find(t => t.id === id);
             if (!todo) return;
-
             const textEl = document.querySelector(`[data-id="${id}"] .todo-text`);
             textEl.contentEditable = true;
             textEl.focus();
-
             const range = document.createRange();
             range.selectNodeContents(textEl);
             const sel = window.getSelection();
@@ -1138,30 +1172,26 @@
 
             function saveEdit() {
                 const newText = textEl.textContent.trim();
-                if (newText) {
-                    todo.text = newText;
-                    saveTodos();
-                }
+                if (newText) { todo.text = newText; saveTodos(); scheduleAutoSync(); }
                 textEl.contentEditable = false;
                 renderTodos();
             }
 
             textEl.addEventListener('blur', saveEdit, { once: true });
             textEl.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    textEl.blur();
-                }
+                if (e.key === 'Enter') { e.preventDefault(); textEl.blur(); }
             }, { once: true });
         }
 
-        // Due Date Helpers
+        function saveTodos() {
+            localStorage.setItem('todos', JSON.stringify(todos));
+        }
+
+        // ==================== DUE DATE HELPERS ====================
         function getDueStatus(dueDate, completed) {
             if (!dueDate || completed) return '';
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const due = new Date(dueDate);
-            due.setHours(0,0,0,0);
+            const today = new Date(); today.setHours(0,0,0,0);
+            const due = new Date(dueDate); due.setHours(0,0,0,0);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
             if (diff < 0) return 'overdue';
             if (diff <= 2) return 'due-soon';
@@ -1171,12 +1201,9 @@
         function formatDueDate(dueDate) {
             if (!dueDate) return '';
             const d = new Date(dueDate);
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const due = new Date(dueDate);
-            due.setHours(0,0,0,0);
+            const today = new Date(); today.setHours(0,0,0,0);
+            const due = new Date(dueDate); due.setHours(0,0,0,0);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-
             const dateStr = `${d.getMonth() + 1}月${d.getDate()}日`;
             if (diff === 0) return `今天截止`;
             if (diff === 1) return `明天截止`;
@@ -1186,22 +1213,15 @@
             return dateStr;
         }
 
-        // Render
+        // ==================== RENDER ====================
         function renderTodos() {
             const list = document.getElementById('todoList');
-
             let filtered = todos;
-            if (currentFilter === 'pending') {
-                filtered = todos.filter(t => !t.completed);
-            } else if (currentFilter === 'completed') {
-                filtered = todos.filter(t => t.completed);
-            } else if (currentFilter === 'high') {
-                filtered = todos.filter(t => t.priority === 'high');
-            } else if (currentFilter === 'overdue') {
-                filtered = todos.filter(t => {
-                    if (t.completed || !t.dueDate) return false;
-                    return getDueStatus(t.dueDate, t.completed) === 'overdue';
-                });
+            if (currentFilter === 'pending') filtered = todos.filter(t => !t.completed);
+            else if (currentFilter === 'completed') filtered = todos.filter(t => t.completed);
+            else if (currentFilter === 'high') filtered = todos.filter(t => t.priority === 'high');
+            else if (currentFilter === 'overdue') {
+                filtered = todos.filter(t => !t.completed && t.dueDate && getDueStatus(t.dueDate, t.completed) === 'overdue');
             } else if (currentFilter === 'category') {
                 filtered = todos.filter(t => t.category === currentCategoryFilter);
             }
@@ -1216,13 +1236,7 @@
                     category: ['📂', '该类别下没有任务', '添加一些属于这个类别的任务吧']
                 };
                 const msg = messages[currentFilter] || messages.all;
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">${msg[0]}</div>
-                        <div class="empty-text">${msg[1]}</div>
-                        <div class="empty-subtext">${msg[2]}</div>
-                    </div>
-                `;
+                list.innerHTML = `<div class="empty-state"><div class="empty-icon">${msg[0]}</div><div class="empty-text">${msg[1]}</div><div class="empty-subtext">${msg[2]}</div></div>`;
                 return;
             }
 
@@ -1230,7 +1244,6 @@
                 const dueStatus = getDueStatus(todo.dueDate, todo.completed);
                 const itemClass = `todo-item ${todo.completed ? 'completed' : ''} ${dueStatus}`;
                 const dueBadgeClass = `meta-badge due-date-badge ${dueStatus}`;
-
                 return `
                 <div class="${itemClass}" data-id="${todo.id}">
                     <div class="checkbox ${todo.completed ? 'checked' : ''}" onclick="toggleTodo(${todo.id})"></div>
@@ -1247,19 +1260,16 @@
                         <button class="action-btn" onclick="editTodo(${todo.id})" title="编辑">✏️</button>
                         <button class="action-btn delete" onclick="deleteTodo(${todo.id})" title="删除">🗑️</button>
                     </div>
-                </div>
-            `}).join('');
+                </div>`;
+            }).join('');
         }
 
-        function getPriorityLabel(p) {
-            return { high: '紧急', medium: '普通', low: '低优先级' }[p] || p;
-        }
+        function getPriorityLabel(p) { return { high: '紧急', medium: '普通', low: '低优先级' }[p] || p; }
 
         function formatDate(iso) {
             const d = new Date(iso);
             const now = new Date();
             const diff = now - d;
-
             if (diff < 60000) return '刚刚';
             if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
             if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
@@ -1272,15 +1282,12 @@
             return div.innerHTML;
         }
 
-        // Stats
+        // ==================== STATS ====================
         function updateStats() {
             const total = todos.length;
             const completed = todos.filter(t => t.completed).length;
             const pending = total - completed;
-            const overdue = todos.filter(t => {
-                if (t.completed || !t.dueDate) return false;
-                return getDueStatus(t.dueDate, t.completed) === 'overdue';
-            }).length;
+            const overdue = todos.filter(t => !t.completed && t.dueDate && getDueStatus(t.dueDate, t.completed) === 'overdue').length;
             const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
             document.getElementById('stat-total').textContent = total;
@@ -1291,24 +1298,237 @@
             document.getElementById('progress-fill').style.width = percent + '%';
         }
 
-        // Storage
-        function saveTodos() {
-            localStorage.setItem('todos', JSON.stringify(todos));
-        }
-
-        // Toast
+        // ==================== TOAST ====================
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2000);
+            setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
-        // Close modal on overlay click
-        document.getElementById('categoryModal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) closeCategoryModal();
+        // ==================== GIST SYNC ====================
+        function openSyncModal() {
+            document.getElementById('gistToken').value = gistToken;
+            document.getElementById('gistId').value = gistId;
+            document.getElementById('syncModal').classList.add('show');
+            updateSyncStatusBox();
+        }
+
+        function closeSyncModal() {
+            document.getElementById('syncModal').classList.remove('show');
+        }
+
+        function showTokenHelp() {
+            document.getElementById('helpModal').classList.add('show');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').classList.remove('show');
+        }
+
+        function updateSyncUI() {
+            const btn = document.getElementById('syncBtn');
+            const badge = document.getElementById('syncBadge');
+            if (gistToken && gistId) {
+                btn.classList.add('synced');
+                badge.classList.add('hidden');
+                btn.title = '云同步已开启';
+            } else {
+                btn.classList.remove('synced');
+                badge.classList.remove('hidden');
+                btn.title = '点击配置云同步';
+            }
+        }
+
+        function updateSyncStatusBox() {
+            const box = document.getElementById('syncStatusBox');
+            if (!gistToken && !gistId) {
+                box.innerHTML = '<div class="sync-status info">☁️ 尚未配置云同步，数据仅保存在本设备</div>';
+            } else if (gistToken && !gistId) {
+                box.innerHTML = '<div class="sync-status info">🔑 Token 已填写，点击"推送"创建云端备份</div>';
+            } else if (gistToken && gistId) {
+                box.innerHTML = '<div class="sync-status success">✅ 云同步已配置，数据可跨设备恢复</div>';
+            } else {
+                box.innerHTML = '';
+            }
+        }
+
+        function setSyncStatus(msg, type) {
+            const box = document.getElementById('syncStatusBox');
+            box.innerHTML = `<div class="sync-status ${type}">${msg}</div>`;
+        }
+
+        async function pushToGist() {
+            const token = document.getElementById('gistToken').value.trim();
+            if (!token) { showToast('请先填写 Token'); return; }
+
+            const btn = document.getElementById('syncBtn');
+            btn.classList.add('syncing');
+            setSyncStatus('⬆️ 正在推送...', 'info');
+
+            const data = { todos, categories, version: 1, updatedAt: new Date().toISOString() };
+            const content = JSON.stringify(data, null, 2);
+
+            try {
+                let id = document.getElementById('gistId').value.trim();
+                let url, method, body;
+
+                if (id) {
+                    // Update existing
+                    url = `https://api.github.com/gists/${id}`;
+                    method = 'PATCH';
+                    body = JSON.stringify({
+                        description: 'ToDo App Data',
+                        files: { 'todo-data.json': { content: content } }
+                    });
+                } else {
+                    // Create new
+                    url = 'https://api.github.com/gists';
+                    method = 'POST';
+                    body = JSON.stringify({
+                        description: 'ToDo App Data',
+                        public: false,
+                        files: { 'todo-data.json': { content: content } }
+                    });
+                }
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: body
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || '请求失败');
+                }
+
+                const result = await res.json();
+                gistToken = token;
+                gistId = result.id;
+                localStorage.setItem('gistToken', gistToken);
+                localStorage.setItem('gistId', gistId);
+                document.getElementById('gistId').value = gistId;
+
+                updateSyncUI();
+                setSyncStatus('✅ 推送成功！数据已保存到 GitHub Gist', 'success');
+                showToast('云端备份成功！');
+            } catch (e) {
+                setSyncStatus('❌ 推送失败：' + e.message, 'error');
+                showToast('推送失败：' + e.message);
+            } finally {
+                btn.classList.remove('syncing');
+            }
+        }
+
+        async function pullFromGist() {
+            const token = document.getElementById('gistToken').value.trim();
+            const id = document.getElementById('gistId').value.trim();
+            if (!token) { showToast('请先填写 Token'); return; }
+            if (!id) { showToast('请先填写 Gist ID 或先执行一次推送'); return; }
+
+            const btn = document.getElementById('syncBtn');
+            btn.classList.add('syncing');
+            setSyncStatus('⬇️ 正在拉取...', 'info');
+
+            try {
+                const res = await fetch(`https://api.github.com/gists/${id}`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || '请求失败');
+                }
+
+                const result = await res.json();
+                const file = result.files['todo-data.json'];
+                if (!file) throw new Error('Gist 中未找到 todo-data.json');
+
+                const data = JSON.parse(file.content);
+                if (data.todos) {
+                    todos = data.todos;
+                    localStorage.setItem('todos', JSON.stringify(todos));
+                }
+                if (data.categories) {
+                    categories = data.categories;
+                    localStorage.setItem('categories', JSON.stringify(categories));
+                }
+
+                gistToken = token;
+                gistId = id;
+                localStorage.setItem('gistToken', gistToken);
+                localStorage.setItem('gistId', gistId);
+
+                initCategorySelect();
+                renderCategoryFilters();
+                renderTodos();
+                updateStats();
+                updateSyncUI();
+                setSyncStatus('✅ 拉取成功！数据已恢复到本设备', 'success');
+                showToast('数据恢复成功！');
+            } catch (e) {
+                setSyncStatus('❌ 拉取失败：' + e.message, 'error');
+                showToast('拉取失败：' + e.message);
+            } finally {
+                btn.classList.remove('syncing');
+            }
+        }
+
+        function clearSyncConfig() {
+            if (!confirm('确定要清除云同步配置吗？本地数据不会删除。')) return;
+            gistToken = '';
+            gistId = '';
+            localStorage.removeItem('gistToken');
+            localStorage.removeItem('gistId');
+            document.getElementById('gistToken').value = '';
+            document.getElementById('gistId').value = '';
+            updateSyncUI();
+            setSyncStatus('☁️ 云同步配置已清除', 'info');
+            showToast('同步配置已清除');
+        }
+
+        function scheduleAutoSync() {
+            if (!gistToken || !gistId || !autoSync) return;
+            if (syncTimeout) clearTimeout(syncTimeout);
+            syncTimeout = setTimeout(() => {
+                // Silent auto push
+                const data = { todos, categories, version: 1, updatedAt: new Date().toISOString() };
+                fetch(`https://api.github.com/gists/${gistId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `token ${gistToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        description: 'ToDo App Data',
+                        files: { 'todo-data.json': { content: JSON.stringify(data, null, 2) } }
+                    })
+                }).then(() => {
+                    showToast('☁️ 已自动同步到云端');
+                }).catch(() => {
+                    // silent fail
+                });
+            }, 3000);
+        }
+
+        // Modal close on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) {
+                    if (overlay.id === 'categoryModal') closeCategoryModal();
+                    if (overlay.id === 'syncModal') closeSyncModal();
+                    if (overlay.id === 'helpModal') closeHelpModal();
+                }
+            });
         });
     </script>
 </body>
